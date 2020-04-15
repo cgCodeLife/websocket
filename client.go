@@ -36,7 +36,7 @@ var errInvalidCompression = errors.New("websocket: invalid compression negotiati
 // etc.
 //
 // Deprecated: Use Dialer instead.
-func NewClient(netConn net.Conn, u *url.URL, requestHeader http.Header, readBufSize, writeBufSize int) (c *Conn, response *http.Response, err error) {
+func NewClient(netConn net.Conn, u *url.URL, requestHeader http.Header, readBufSize, writeBufSize int,  opts ...Option) (c *Conn, response *http.Response, err error) {
 	d := Dialer{
 		ReadBufferSize:  readBufSize,
 		WriteBufferSize: writeBufSize,
@@ -44,8 +44,23 @@ func NewClient(netConn net.Conn, u *url.URL, requestHeader http.Header, readBufS
 			return netConn, nil
 		},
 	}
+
+	for _, opt := range opts {
+		opt(&d)
+	}
+
 	return d.Dial(u.String(), requestHeader)
 }
+
+//提供opention选项更新
+type Option func(d *Dialer)
+
+func WithNetWorkType(network string) Option {
+	return func(d *Dialer) {
+		d.NetWorkType = network
+	}
+}
+
 
 // A Dialer contains options for connecting to WebSocket server.
 type Dialer struct {
@@ -99,6 +114,8 @@ type Dialer struct {
 	// If Jar is nil, cookies are not sent in requests and ignored
 	// in responses.
 	Jar http.CookieJar
+	//支持网络类型
+	NetWorkType string
 }
 
 // Dial creates a new client connection by calling DialContext with a background context.
@@ -288,7 +305,7 @@ func (d *Dialer) DialContext(ctx context.Context, urlStr string, requestHeader h
 		trace.GetConn(hostPort)
 	}
 
-	netConn, err := netDial("tcp", hostPort)
+	netConn, err := netDial(d.NetWorkType, hostPort)
 	if trace != nil && trace.GotConn != nil {
 		trace.GotConn(httptrace.GotConnInfo{
 			Conn: netConn,
