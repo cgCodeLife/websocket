@@ -163,6 +163,11 @@ var nilDialer = *DefaultDialer
 // non-nil *http.Response so that callers can handle redirects, authentication,
 // etcetera. The response body may not contain the entire response and does not
 // need to be closed by the application.
+
+func (d *Dialer) SetNetWorkType(network string) {
+	d.NetWorkType = network
+}
+
 func (d *Dialer) DialContext(ctx context.Context, urlStr string, requestHeader http.Header) (*Conn, *http.Response, error) {
 	if d == nil {
 		d = &nilDialer
